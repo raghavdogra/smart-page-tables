@@ -11,7 +11,7 @@ obj/%.o: source/%.cpp
 
 clean :
 	\rm -fr obj/*
-	\rm -fr mydump
+	\rm -fr simulate
 	\rm -fr *~
 	\rm -fr src/*~
 	\rm -fr include/*~
