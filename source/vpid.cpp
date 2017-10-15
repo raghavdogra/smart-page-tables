@@ -2,20 +2,44 @@
 #include <iostream>
 #include <map>
 #include <iterator>
-
+#include "../include/vpid.hpp"
 using namespace std;
 
-#define NUM_SLOTS	255
 
-map<int,int> vpid;
-static int next_vpid = 0;
 
+
+int next_vpid = -1;
 /*returns the next free vpid. Can be changed in future*/
 
 int next_free_vpid(void) {
-    int next = next_vpid++;
-    next_vpid = next_vpid % NUM_SLOTS;
-    return next;
+    cout << endl;
+    next_vpid = (next_vpid + 1)% NUM_SLOTS;
+
+    cout << "testing vpid:key:"<< next_vpid << "-value-" << vpid[next_vpid]<<endl;
+
+    if (count_pages_per_proc.find(vpid[next_vpid]) == count_pages_per_proc.end()) {
+        // not found in count pages totally new process
+        cout << "could not find proc in count_pages_per_proc ";
+        return next_vpid;
+    }
+    // found
+    // count = 0
+    if (count_pages_per_proc[vpid[next_vpid]] == 0) {
+        cout << "found in count_pages_per_proc but count of pages is 0 ";
+        return next_vpid;
+    }
+    // count != 0 so keep looking
+    // TODO: check again
+    for (auto it = vpid.begin() ; it != vpid.end(); it++) {
+        if ((count_pages_per_proc.find(it->second) == count_pages_per_proc.end()) || (count_pages_per_proc[it->second] == 0)) {
+            next_vpid = it->first;
+            cout << "found but count was not 0, looking for more vpids ";
+            return next_vpid;
+        }
+    }
+
+    return -1; 
+
 }
     
 
