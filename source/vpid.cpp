@@ -17,7 +17,7 @@ int next_free_vpid(void) {
     next_vpid = (next_vpid + 1)% NUM_SLOTS;
 
     cout << "testing vpid:key:"<< next_vpid << "-value-" << vpid[next_vpid]<<endl;
-
+    // CHECKED
     if (count_pages_per_proc.find(vpid[next_vpid]) == count_pages_per_proc.end()) {
         // not found in count pages totally new process
         cout << "could not find proc in count_pages_per_proc ";

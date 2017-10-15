@@ -26,28 +26,42 @@ void parseFile(char *fileName) {
     
 			int pid = stoi(tokens[0], nullptr, 10);
 			int numpages = stoi(tokens[2], nullptr, 10);
+			cout<< endl;
 			
+			// CHECKED
 			if (tokens[1].compare("D") == 0) {
 				// deallocation
-				if (count_pages_per_proc.find(pid) != count_pages_per_proc.end()) {
+				if ((count_pages_per_proc.find(pid) != count_pages_per_proc.end()) && (count_pages_per_proc[pid] >= numpages)) {
 					// meaning it is there in the map as expected
+					if ((count_pages_per_proc[pid] - numpages) == 0) {
+						count_pages_per_proc.erase(pid);
+						cout << "erasing record for pid "<< pid<<endl;
+						continue;
+					}
 					count_pages_per_proc[pid] -= numpages;
+
+					cout << "deallocated-pid:"<< pid<<"-count pages-"<<count_pages_per_proc[pid]<<endl;
 				}
 			}
 			
 			else if (tokens[1].compare("A") == 0) {
 				// case 1: it is already there in the system and its count is not 0
+				// CHECKED
 				if ((count_pages_per_proc.find(pid) != count_pages_per_proc.end()) && count_pages_per_proc[pid] != 0) {
 					count_pages_per_proc[pid] += numpages;
+					cout<<"process already there in system with non-0 count: pid"<< pid<<"-count of pages-"<<count_pages_per_proc[pid]<<endl;
 					continue;
 				}
 				// case 2: new process
 				int new_vpid = next_free_vpid();
 				cout << " new vpid:"<<new_vpid<< endl;
 
-				if (new_vpid == -1) rehash_count++;
+				if (new_vpid == -1) {
+					cout << "NEED FOR REHASH"<< endl;
+					rehash_count++;
+				}
 				else {
-					vpid.insert(std::map<int, int>::value_type(new_vpid, pid));
+					vpid[new_vpid] = pid;
 					cout << "testing vpid insertion:key:" << new_vpid<<"-value-"<<vpid[new_vpid]<<endl;
 					count_pages_per_proc.insert({pid, numpages});
 					cout << "testing count_pages_per_proc insertion:key:"<<pid << "-value-"<<count_pages_per_proc[pid]<<endl;
