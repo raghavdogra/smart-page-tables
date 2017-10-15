@@ -5,10 +5,11 @@
 #include "../include/vpid.hpp"
 using namespace std;
 
+map<int,int> vpid;
+map<int, int> count_pages_per_proc;
 
 
-
-int next_vpid = -1;
+static int next_vpid = -1;
 /*returns the next free vpid. Can be changed in future*/
 
 int next_free_vpid(void) {

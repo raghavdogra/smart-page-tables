@@ -1,7 +1,8 @@
 #ifndef __VPID_HPP
 #define __VPID_HPP
+
 #include <map>
-extern int next_vpid;
+
 #define NUM_SLOTS       256
 
 int next_free_vpid(void);
@@ -19,4 +20,5 @@ void display_vpid (void);
 extern std::map<int,int> vpid;
 
 extern std::map<int, int> count_pages_per_proc;
+
 #endif

@@ -10,9 +10,7 @@
 
 using namespace std;
 
-std::map<int,int> vpid;
 
-std::map<int, int> count_pages_per_proc;
 
 void parseFile(char *fileName) {
 	int rehash_count = 0;
@@ -25,7 +23,7 @@ void parseFile(char *fileName) {
 			copy(istream_iterator<string>(iss),
      		istream_iterator<string>(),
      		back_inserter(tokens));
-     		
+    
 			int pid = stoi(tokens[0], nullptr, 10);
 			int numpages = stoi(tokens[2], nullptr, 10);
 			
