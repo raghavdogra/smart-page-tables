@@ -51,7 +51,7 @@ void delete_one_page( int pid, unsigned long vaddr, int blk_num, int tbl_num, in
 
 void delete_pages(int pid, int key, int numpages, unsigned long vaddr, int debug_id) {
 	for(int i = 0; i < numpages; i++)
-		delete_one_page(pid, vaddr + (4096 * i), new_vpid, 0, 0, NUM_VPIDS * 2, debug_id);
+		delete_one_page(pid, vaddr + (4096 * i), key, 0, 0, NUM_VPIDS * 2, debug_id);
 	return;
 }
 
@@ -139,7 +139,7 @@ void parseFile(char *fileName) {
 
 					cout << line_num << ".deallocated pages for pid:"<< pid << ", curr count of pages:" << count_pages_per_proc[pid] << endl;
 					int key = get_vpid(pid);
-					delete_pages(pid, key, numpages, vaddr, debug_id);
+					delete_pages(pid, key, numpages, vaddr, line_num);
 					/*
 					If count of pages for this process has been reduced to 0, delete it from map
 					*/
