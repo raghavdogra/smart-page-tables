@@ -20,6 +20,41 @@ int hash(int tableid, int pid, unsigned long vaddr, int blk_num) {
 	return blk_num;
 }
 
+
+void delete_one_page( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, int max_tries, int debug_id ) {
+	if (try_num == max_tries) {
+		/* Just printing for now, need to retry with next page */
+		cout << debug_id << ".could not find allocation for vaddr:" << vaddr << endl;
+		return;
+	}
+
+	/* Check if this pid and the same vaddr is already present in tbl1 or tbl2 */
+	for( int i = 0; i < NUM_MEMS; i++ ) {
+		if ( MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].pid == pid
+			 && MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].valid == true
+			 && MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].vaddr == vaddr ) {
+			MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].valid = false;
+			cout << debug_id << ".removal successful" << endl;
+			return;
+		}
+	}
+
+	
+	if (try_num == 0)
+		delete_one_page( pid, vaddr, blk_num, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id );
+	else
+		delete_one_page( pid, vaddr, (blk_num + 1) % NUM_BLK_PER_MEM, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id );
+	
+	return;
+}
+
+
+void delete_pages(int pid, int key, int numpages, unsigned long vaddr, int debug_id) {
+	for(int i = 0; i < numpages; i++)
+		delete_one_page(pid, vaddr + (4096 * i), new_vpid, 0, 0, NUM_VPIDS * 2, debug_id);
+	return;
+}
+
 /* 
 pid, vaddr of page to be placed in phys mem, the block it is to be placed in, the first 500 MB
 or the second 500 MB , the count of dislocations so far, total number of tries that if exceeded
@@ -98,6 +133,14 @@ void parseFile(char *fileName) {
 				 */
 				if ((count_pages_per_proc.find(pid) != count_pages_per_proc.end()) && (count_pages_per_proc[pid] >= numpages)) {
 					/*
+					Reduce the count
+					*/
+					count_pages_per_proc[pid] -= numpages;
+
+					cout << line_num << ".deallocated pages for pid:"<< pid << ", curr count of pages:" << count_pages_per_proc[pid] << endl;
+					int key = get_vpid(pid);
+					delete_pages(pid, key, numpages, vaddr, debug_id);
+					/*
 					If count of pages for this process has been reduced to 0, delete it from map
 					*/
 					if ((count_pages_per_proc[pid] - numpages) == 0) {
@@ -105,12 +148,6 @@ void parseFile(char *fileName) {
 						cout << line_num << ".erasing record for pid "<< pid<<endl;
 						continue;
 					}
-					/*
-					Otherwise just reduce the count
-					*/
-					count_pages_per_proc[pid] -= numpages;
-
-					cout << line_num << ".deallocated pages for pid:"<< pid << ", curr count of pages:" << count_pages_per_proc[pid] << endl;
 				}
 				else {
 					/*
