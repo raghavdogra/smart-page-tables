@@ -163,7 +163,7 @@ void parseFile(char *fileName) {
 				*/
 				if ((count_pages_per_proc.find(pid) != count_pages_per_proc.end()) && count_pages_per_proc[pid] != 0) {
 					count_pages_per_proc[pid] += numpages;
-					cout << line_num << ".process already there with non-0 count: pid"<< pid << "-page cnt-" << count_pages_per_proc[pid] << endl;
+					cout << line_num << ".process already there with non-0 count, pid:"<< pid << "-page cnt-" << count_pages_per_proc[pid] << endl;
 					/* need to allocate pages here */
 					int key = get_vpid(pid);
 					cuckoo(pid, vaddr, key, numpages, line_num);

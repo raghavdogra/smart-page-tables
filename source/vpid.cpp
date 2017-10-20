@@ -64,14 +64,11 @@ int insert_pid(int pid) {
 
 /* returns the vpid corresponding to a pid, -1 otherwise */
 int get_vpid(int pid) {
-    auto itr = vpid.find(pid);
-    if(itr != vpid.end()) {
-	return itr->second;
+    for(auto itr = vpid.begin(); itr != vpid.end(); itr++) {
+        if (itr->second == pid) return itr->first;
     }
-    else {
-	cout << "error: PID not in vpid table";
-	return -1;
-    }
+    cout << "pid:" << pid << " Not found in vpid table" << endl;
+    return -1;
 }
 
 void remove_pid(int pid) {
