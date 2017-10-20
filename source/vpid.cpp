@@ -8,38 +8,40 @@ using namespace std;
 map<int,int> vpid;
 map<int, int> count_pages_per_proc;
 
-
+static int rehash_count = 0;
 static int next_vpid = -1;
 /*returns the next free vpid. Can be changed in future*/
 
-int next_free_vpid(void) {
-    cout << endl;
-    next_vpid = (next_vpid + 1)% NUM_SLOTS;
+int next_free_vpid(int line_num) {
+    next_vpid = (next_vpid + 1)% NUM_VPIDS;
 
-    cout << "testing vpid:key:"<< next_vpid << "-value-" << vpid[next_vpid]<<endl;
-    // CHECKED
+    cout << line_num << ".testing vpid:key:" << next_vpid << "-value-" << vpid[next_vpid]<<endl;
+
     if (count_pages_per_proc.find(vpid[next_vpid]) == count_pages_per_proc.end()) {
         // not found in count pages totally new process
-        cout << "could not find proc in count_pages_per_proc ";
+        cout << line_num << ".could not find proc in count_pages_per_proc " << endl;
         return next_vpid;
     }
     // found
-    // count = 0
-    if (count_pages_per_proc[vpid[next_vpid]] == 0) {
-        cout << "found in count_pages_per_proc but count of pages is 0 ";
-        return next_vpid;
-    }
     // count != 0 so keep looking
-    // TODO: check again
     for (auto it = vpid.begin() ; it != vpid.end(); it++) {
-        if ((count_pages_per_proc.find(it->second) == count_pages_per_proc.end()) || (count_pages_per_proc[it->second] == 0)) {
+        if (count_pages_per_proc.find(it->second) == count_pages_per_proc.end()) {
             next_vpid = it->first;
-            cout << "found but count was not 0, looking for more vpids ";
+            cout << line_num << ".found but count was not 0, looking for more vpids " << endl;
             return next_vpid;
         }
     }
+    
+    int old_num_vpids = NUM_VPIDS;
+    NUM_VPIDS = NUM_VPIDS * 2;
 
-    return -1; 
+    for(int j = old_num_vpids; j < NUM_VPIDS; j++) {
+        vpid.insert({j, -1});
+    }
+    rehash_count++;
+    cout << line_num << ".NEED FOR REHASH - rehash count "<< rehash_count << endl;
+    next_vpid = old_num_vpids;
+    return next_vpid;
 
 }
     
@@ -48,7 +50,7 @@ int next_free_vpid(void) {
 /* inserts the pid into vpid map, 
 ** returns the vpid assigned to the pid, -1 if pid already mapped to a vpid 
 */
-
+/*
 int insert_pid(int pid) {
     if(vpid.find(pid) != vpid.end()) {
 	std::cout << "error: PID " << pid << "already mapped to a VPID!" <<std::endl;
@@ -58,7 +60,7 @@ int insert_pid(int pid) {
     vpid.insert(pair <int,int> (pid,vpid_val));
     return vpid_val;
 }
-
+*/
 
 /* returns the vpid corresponding to a pid, -1 otherwise */
 int get_vpid(int pid) {
