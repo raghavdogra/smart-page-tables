@@ -16,9 +16,11 @@ print len(proc)
 
 opfile = open('output2.txt','w')
 
-for i in range(260):
-	opfile.write(str(i) + '    A       3       ce70d000')
-	opfile.write("\n")
+
+for j in range(512):
+	for i in range(256):
+		opfile.write(str(i) + '    A       1       '+str((4096*j)+2097152))
+		opfile.write("\n")
 
 
 opfile.close()

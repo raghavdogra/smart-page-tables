@@ -30,10 +30,10 @@ void delete_one_page( int pid, unsigned long vaddr, int blk_num, int tbl_num, in
 
 	/* Check if this pid and the same vaddr is already present in tbl1 or tbl2 */
 	for( int i = 0; i < NUM_MEMS; i++ ) {
-		if ( MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].pid == pid
-			 && MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].valid == true
-			 && MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].vaddr == vaddr ) {
-			MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].valid = false;
+		if ( MEM[i].block[blk_num].page[(vaddr % 2097152) / 4096].pid == pid
+			 && MEM[i].block[blk_num].page[(vaddr % 2097152) / 4096].valid == true
+			 && MEM[i].block[blk_num].page[(vaddr % 2097152) / 4096].vaddr == vaddr ) {
+			MEM[i].block[blk_num].page[(vaddr % 2097152) / 4096].valid = false;
 			cout << debug_id << ".removal successful" << endl;
 			return;
 		}
@@ -69,19 +69,20 @@ void place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num,
 
 	/* Check if this pid and the same vaddr is already present in tbl1 or tbl2 */
 	for( int i = 0; i < NUM_MEMS; i++ ) {
-		if ( MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].pid == pid
-			 && MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].valid == true
-			 && MEM[i].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].vaddr == vaddr ) {
+		if ( MEM[i].block[blk_num].page[(vaddr % 2097152) / 4096].pid == pid
+			 && MEM[i].block[blk_num].page[(vaddr % 2097152) / 4096].valid == true
+			 && MEM[i].block[blk_num].page[(vaddr % 2097152) / 4096].vaddr == vaddr ) {
 			cout << debug_id << ".already here" << endl;
 			return;
 		}
 	}
 
-	if ( MEM[tbl_num].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].valid == true ) {
-		int repl_pid = MEM[tbl_num].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].pid;
-		unsigned long repl_vaddr = MEM[tbl_num].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].vaddr;
-		MEM[tbl_num].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].pid = pid;
-		MEM[tbl_num].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].vaddr = vaddr;
+	if ( MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].valid == true ) {
+		int repl_pid = MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].pid;
+		unsigned long repl_vaddr = MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].vaddr;
+		MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].pid = pid;
+		MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].vaddr = vaddr;
+		//cout << debug_id << ".pid:" << pid << ",vaddr:" << vaddr << " replacing pid:" << repl_pid << ",vaddr:" << repl_vaddr << endl;
 		if (try_num == 0)
 			place( repl_pid, repl_vaddr, blk_num, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id );
 		else
@@ -89,9 +90,9 @@ void place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num,
 	}
 	else {
 		/* empty page, so just place it here */
-		MEM[tbl_num].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].valid = true;
-		MEM[tbl_num].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].pid = pid;
-		MEM[tbl_num].block[blk_num].page[vaddr % NUM_PAGES_PER_BLK].vaddr = vaddr;
+		MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].valid = true;
+		MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].pid = pid;
+		MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].vaddr = vaddr;
 		cout << debug_id << ".allocated pid:" << pid << ",vaddr:" << vaddr << " in tbl:" << tbl_num << ",blk:" << blk_num << endl;
 	}
 	return;
@@ -121,9 +122,10 @@ void parseFile(char *fileName) {
     
 			int pid = stoi(tokens[0], nullptr, 10);
 			int numpages = stoi(tokens[2], nullptr, 10);
-			unsigned long vaddr = stoul(tokens[3], nullptr, 16);
+			unsigned long vaddr = stoul(tokens[3], nullptr, 10);
 
 			cout<< endl;
+			cout << line_num << ".New request arrived" << endl;
 			
 			// deallocation
 			if (tokens[1].compare("D") == 0) {
@@ -153,6 +155,7 @@ void parseFile(char *fileName) {
 					/*
 					Checking number of dealloc reqs that came bfr alloc reqs
 					*/
+					cout << line_num << ".dealloc req came before alloc" << endl;
 					dealloc_bfr_alloc++;
 				}
 			}
