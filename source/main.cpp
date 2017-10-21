@@ -79,7 +79,7 @@ void place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num,
 		MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].pid = pid;
 		MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].vaddr = vaddr;
 		cout << debug_id << ".pid:" << pid << ",vaddr:" << vaddr << " replacing pid:" << repl_pid << ",vaddr:" << repl_vaddr << endl;
-		if (try_num == 0)
+		if (tbl_num != (NUM_MEMS - 1))
 			place( repl_pid, repl_vaddr, blk_num, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id );
 		else
 			place( repl_pid, repl_vaddr, (blk_num + 1) % NUM_BLK_PER_MEM, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id );
