@@ -21,7 +21,7 @@ int hash(int tableid, int pid, unsigned long vaddr, int blk_num) {
 }
 
 
-void delete_one_page( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, int max_tries, int debug_id ) {
+void delete_one_page( int pid, unsigned long vaddr, int blk_num, int try_num, int max_tries, int debug_id ) {
 	if (try_num == max_tries) {
 		/* Just printing for now, need to retry with next page */
 		cout << debug_id << ".could not find allocation for vaddr:" << vaddr << endl;
@@ -38,12 +38,8 @@ void delete_one_page( int pid, unsigned long vaddr, int blk_num, int tbl_num, in
 			return;
 		}
 	}
-
 	
-	if (try_num == 0)
-		delete_one_page( pid, vaddr, blk_num, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id );
-	else
-		delete_one_page( pid, vaddr, (blk_num + 1) % NUM_BLK_PER_MEM, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id );
+	delete_one_page( pid, vaddr, (blk_num + 1) % NUM_BLK_PER_MEM, try_num + 1, max_tries, debug_id );
 	
 	return;
 }
@@ -51,7 +47,7 @@ void delete_one_page( int pid, unsigned long vaddr, int blk_num, int tbl_num, in
 
 void delete_pages(int pid, int key, int numpages, unsigned long vaddr, int debug_id) {
 	for(int i = 0; i < numpages; i++)
-		delete_one_page(pid, vaddr + (4096 * i), key, 0, 0, NUM_VPIDS * 2, debug_id);
+		delete_one_page(pid, vaddr + (4096 * i), key, 0, NUM_VPIDS, debug_id);
 	return;
 }
 
@@ -82,7 +78,7 @@ void place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num,
 		unsigned long repl_vaddr = MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].vaddr;
 		MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].pid = pid;
 		MEM[tbl_num].block[blk_num].page[(vaddr % 2097152) / 4096].vaddr = vaddr;
-		//cout << debug_id << ".pid:" << pid << ",vaddr:" << vaddr << " replacing pid:" << repl_pid << ",vaddr:" << repl_vaddr << endl;
+		cout << debug_id << ".pid:" << pid << ",vaddr:" << vaddr << " replacing pid:" << repl_pid << ",vaddr:" << repl_vaddr << endl;
 		if (try_num == 0)
 			place( repl_pid, repl_vaddr, blk_num, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id );
 		else
@@ -119,14 +115,14 @@ void parseFile(char *fileName) {
 			copy(istream_iterator<string>(iss),
      		istream_iterator<string>(),
      		back_inserter(tokens));
-    
+    		
 			int pid = stoi(tokens[0], nullptr, 10);
 			int numpages = stoi(tokens[2], nullptr, 10);
 			unsigned long vaddr = stoul(tokens[3], nullptr, 10);
 
 			cout<< endl;
 			cout << line_num << ".New request arrived" << endl;
-			
+			cout << line_num << " " << tokens[0] << " " << tokens[1] << " " << tokens[2] << " " << tokens[3] << endl;
 			// deallocation
 			if (tokens[1].compare("D") == 0) {
 				/*
@@ -145,7 +141,7 @@ void parseFile(char *fileName) {
 					/*
 					If count of pages for this process has been reduced to 0, delete it from map
 					*/
-					if ((count_pages_per_proc[pid] - numpages) == 0) {
+					if (count_pages_per_proc[pid] == 0) {
 						count_pages_per_proc.erase(pid);
 						cout << line_num << ".erasing record for pid "<< pid<<endl;
 						continue;
