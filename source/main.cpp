@@ -63,7 +63,7 @@ pid, vaddr of page to be placed in phys mem, the block it is to be placed in, th
 or the second 500 MB , the count of dislocations so far, total number of tries that if exceeded
 implies we are caught in a circle
 */
-int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, int max_tries, int debug_id ) {
+int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, int max_tries, int debug_id, unsigned long offset ) {
 	if (try_num == max_tries) {
 		/* Just printing for now, need to retry with next page */
 		cout << debug_id << ".max tries exceeded for vaddr:" << vaddr << endl;
@@ -72,32 +72,32 @@ int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, 
 
 	/* Check if this pid and the same vaddr is already present in tbl1 or tbl2 */
 	for( int i = 0; i < NUM_MEMS; i++ ) {
-		if ( ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].pid == pid
-			 && ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].valid == true
-			 && ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].vaddr == vaddr ) {
+		if ( ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].pid == pid
+			 && ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].valid == true
+			 && ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].vaddr == vaddr ) {
 			cout << debug_id << ".already here" << endl;
 			return 0;
 		}
 	}
 
-	if ( ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].valid == true ) {
+	if ( ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].valid == true ) {
 		
-		int repl_pid = ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].pid;
-		unsigned long repl_vaddr = ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].vaddr;
-		ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].pid = pid;
-		ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].vaddr = vaddr;
+		int repl_pid = ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].pid;
+		unsigned long repl_vaddr = ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].vaddr;
+		ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].pid = pid;
+		ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].vaddr = vaddr;
 		cout << debug_id << ".pid:" << pid << ",vaddr:" << vaddr << " replacing pid:" << repl_pid << ",vaddr:" << repl_vaddr << endl;
 
 		if (tbl_num != (NUM_MEMS - 1))
-			return place( repl_pid, repl_vaddr, blk_num, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id );
+			return place( repl_pid, repl_vaddr, blk_num, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id, offset);
 		else
-			return place( repl_pid, repl_vaddr, (blk_num + 1) % NUM_BLK_PER_MEM, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id );
+			return place( repl_pid, repl_vaddr, (blk_num + 1) % NUM_BLK_PER_MEM, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id, offset);
 	}
 	
 		/* empty page, so just place it here */
-	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].valid = true;
-	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].pid = pid;
-	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].vaddr = vaddr;
+	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].valid = true;
+	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].pid = pid;
+	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].vaddr = vaddr;
 	cout << debug_id << ".allocated pid:" << pid << ",vaddr:" << vaddr << " in tbl:" << tbl_num << ",blk:" << blk_num << endl;
 	
 	return 0;
@@ -105,12 +105,26 @@ int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, 
 
 void cuckoo(int pid, unsigned long vaddr, int new_vpid, int numpages, int debug_id) {
 	int ret = 0;
-	
+	unsigned long offset = (vaddr % BLK_SIZE) / PAGE_SIZE;
+
 	for(int i = 0; i < numpages; i++) {
-		ret = place(pid, vaddr + (PAGE_SIZE * i), new_vpid, 0, 0, NUM_VPIDS * 2, debug_id);
+
+		ret = place(pid, vaddr + (PAGE_SIZE * i), new_vpid, 0, 0, NUM_VPIDS * 2, debug_id, offset);
+
+		if (ret == 1) {
+
+			int count = 0;
+			while ((ret != 1) || (count < (NUM_PAGES_PER_BLK - 1))) {
+				count++;
+				ret = place(pid, vaddr + (PAGE_SIZE * i), new_vpid, 0, 0, NUM_VPIDS * 2, debug_id, (offset + 1) % NUM_PAGES_PER_BLK);
+			}
+
+		}
 	}
 	return;
 }
+
+
 
 void parseFile(char *fileName) {
 	int rehash_count = 0;
@@ -225,12 +239,18 @@ int main(int argc, char* argv[]) {
 	char *fileName = argv[1];
 	MEM_SIZE = atoi(argv[2]) * 1073741824;
 	PAGE_SIZE = atoi(argv[3]);
-	NUM_PAGES_PER_MEM = (MEM_SIZE/NUM_MEMS)/PAGE_SIZE;
-	NUM_BLK_PER_MEM = (MEM_SIZE/NUM_MEMS)/NUM_VPIDS;
+
+	NUM_PAGES_PER_MEM = (MEM_SIZE/NUM_MEMS)/PAGE_SIZE; 
+	// NUM_BLK_PER_MEM = (MEM_SIZE/NUM_MEMS)/NUM_VPIDS;
+
+	NUM_BLK_PER_MEM = NUM_VPIDS;
+
 	BLK_SIZE = (MEM_SIZE/NUM_MEMS)/NUM_BLK_PER_MEM;
 	NUM_PAGES_PER_BLK = BLK_SIZE/PAGE_SIZE;
+	
 	ram = new PAGE_t[NUM_MEMS * NUM_PAGES_PER_MEM];
 	
+	// cout << "mem size:" << MEM_SIZE << ",page size:" << PAGE_SIZE << ",pages per mem:" << NUM_PAGES_PER_MEM << ",blks per mem:" << NUM_BLK_PER_MEM << ",blk size:" << BLK_SIZE << ",pages per blk:" << NUM_PAGES_PER_BLK << endl;
 	for (int i = 0; i < NUM_PAGES_PER_MEM; i++) {
 		ram[i].valid = false;
 	}

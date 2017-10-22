@@ -17,10 +17,19 @@ print len(proc)
 opfile = open('output2.txt','w')
 
 
-for j in range(512):
-	for i in range(256):
-		opfile.write(str(i) + '    A       1       '+str((4096*j)))
-		opfile.write("\n")
 
+for i in range(5):
+	opfile.write(str(i) + '    A       1       '+str(0))
+	opfile.write("\n")
+
+
+for i in range(5):
+	opfile.write(str(i) + '    A       1       '+str(2097152))
+	opfile.write("\n")
+
+
+for i in range(5):
+	opfile.write(str(i) + '    A       1       '+str(4194304))
+	opfile.write("\n")
 
 opfile.close()
