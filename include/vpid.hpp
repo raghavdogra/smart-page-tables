@@ -2,8 +2,14 @@
 #define __VPID_HPP
 
 #include <map>
-#define NUM_PAGES_PER_BLK	512
-#define NUM_BLK_PER_MEM		256
+extern int NUM_PAGES_PER_BLK;
+extern int NUM_BLK_PER_MEM;
+extern unsigned long PAGE_SIZE;
+extern unsigned long BLK_SIZE;
+
+extern unsigned long MEM_SIZE;
+
+extern int NUM_PAGES_PER_MEM;
 #define NUM_MEMS			2
 extern int NUM_VPIDS;
 
@@ -24,6 +30,8 @@ typedef struct {
 	bool valid;
 } PAGE_t;
 
+
+/*
 typedef struct {
 	PAGE_t page[NUM_PAGES_PER_BLK];
 } BLOCK_t;
@@ -33,6 +41,8 @@ typedef struct {
 } MEMORY_t;
 
 extern MEMORY_t MEM[NUM_MEMS];
+*/
+
 
 extern std::map<int,int> vpid;
 
