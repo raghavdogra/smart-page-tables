@@ -36,6 +36,7 @@ int next_free_vpid(int line_num) {
     for(int j = old_num_vpids; j < NUM_VPIDS; j++) {
         vpid.insert({j, -1});
     }
+    cout << line_num << ".NEED FOR REHASH - rehash count "<< rehash_count << endl;
     rehash_count++;
     NUM_VPIDS = NUM_VPIDS * 2;
     NUM_BLK_PER_MEM = NUM_VPIDS;
@@ -57,8 +58,9 @@ int next_free_vpid(int line_num) {
 		cuckoo(newram[i].pid, newram[i].vaddr, get_vpid(newram[i].pid) , 1, i);	
 	}
     }
-    cout << line_num << ".NEED FOR REHASH - rehash count "<< rehash_count << endl;
+    cout << "---------------------------------------" << endl;
     next_vpid = old_num_vpids;
+    cout << "REHASh DONE" << endl;
     return next_vpid;
 
 }

@@ -144,7 +144,7 @@ void parseFile(char *fileName) {
     		
 			int pid = stoi(tokens[0], nullptr, 10);
 			int numpages = stoi(tokens[2], nullptr, 10);
-			unsigned long vaddr = stoul(tokens[3], nullptr, 10);
+			unsigned long vaddr = stoul(tokens[3], nullptr, 16);
 
 			cout<< endl;
 			cout << line_num << ".New request arrived" << endl;
