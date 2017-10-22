@@ -29,7 +29,7 @@ typedef struct {
 	unsigned long vaddr;
 	bool valid;
 } PAGE_t;
-
+extern PAGE_t * ram;
 
 /*
 typedef struct {
@@ -47,5 +47,5 @@ extern MEMORY_t MEM[NUM_MEMS];
 extern std::map<int,int> vpid;
 
 extern std::map<int, int> count_pages_per_proc;
-
+void cuckoo(int pid, unsigned long vaddr, int new_vpid, int numpages, int debug_id);
 #endif

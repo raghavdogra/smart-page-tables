@@ -33,19 +33,35 @@ int next_free_vpid(int line_num) {
     }
     
     int old_num_vpids = NUM_VPIDS;
-    NUM_VPIDS = NUM_VPIDS * 2;
-
     for(int j = old_num_vpids; j < NUM_VPIDS; j++) {
         vpid.insert({j, -1});
     }
     rehash_count++;
+    NUM_VPIDS = NUM_VPIDS * 2;
+    NUM_BLK_PER_MEM = NUM_VPIDS;
+    BLK_SIZE = (MEM_SIZE/NUM_MEMS)/NUM_BLK_PER_MEM;
+    NUM_PAGES_PER_BLK = BLK_SIZE/PAGE_SIZE;
+    PAGE_t *newram = new PAGE_t[2 * NUM_PAGES_PER_MEM];
+    for(int i = 0; i < 2*NUM_PAGES_PER_MEM; i++) {
+	newram[i].valid = ram[i].valid;
+	newram[i].pid = ram[i].pid;
+	newram[i].vaddr = ram[i].vaddr;
+    }
+    delete[] ram;
+    ram = new PAGE_t[2 * NUM_PAGES_PER_MEM];
+    for (int i = 0; i < NUM_PAGES_PER_MEM; i++) {
+	ram[i].valid = false;
+    }
+    for(int i = 0; i < 2 * NUM_PAGES_PER_MEM; i++) {
+	if(newram[i].valid) {
+		cuckoo(newram[i].pid, newram[i].vaddr, get_vpid(newram[i].pid) , 1, i);	
+	}
+    }
     cout << line_num << ".NEED FOR REHASH - rehash count "<< rehash_count << endl;
     next_vpid = old_num_vpids;
     return next_vpid;
 
 }
-    
-
 
 /* inserts the pid into vpid map, 
 ** returns the vpid assigned to the pid, -1 if pid already mapped to a vpid 
