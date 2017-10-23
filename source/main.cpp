@@ -110,19 +110,22 @@ int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, 
 
 void computePerf() {
 	for(int i = 0; i < 2 *NUM_PAGES_PER_MEM - 1; i++ ) {
+		
 		if(!ram[i].valid) {
+			//cout << "are we ever here 2" << endl;
 			cont = 0;
 		}
 		else if(ram[i+1].vaddr == (ram[i].vaddr + 4096) && ram[i+1].pid == ram[i].pid) {
 			cont++;
-			cout << endl << "Are we ever here 1";
+			//cout << "Are we ever here 1" << endl;
 			if(cont == 512) {
-				cout << endl << "Are we ever here";
+				//cout << "Are we ever here" << endl;
 				perfCount++;
 				cont = 0;
 			}
 		}
 		else {
+			//cout << "are we ever here 2" << endl;
 			cont = 0;
 		}
 	}
@@ -286,5 +289,6 @@ int main(int argc, char* argv[]) {
 	cout << endl << "perfCount: " << perfCount;
 	double perf = (double) perfCount/ allocCount;
 	cout << endl << "Perf: " << perf << endl;
+	cout << endl << "cont:" << cont << endl;
 	return 0;
 }

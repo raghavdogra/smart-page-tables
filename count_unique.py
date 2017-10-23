@@ -19,8 +19,9 @@ opfile = open('output2.txt','w')
 
 
 for i in range(2):
-	for j in range(0, 2097152, 4096):
-		opfile.write(str(i) + '    A       1       '+str(j))
+	for j in range(0, 2097151, 4096):
+
+		opfile.write(str(i) + '    A       1       '+str(hex(j))[2:])
 		opfile.write("\n")
 
 
