@@ -18,6 +18,11 @@ unsigned long MEM_SIZE;
 int NUM_PAGES_PER_MEM;
 int NUM_VPIDS;
 PAGE_t *ram;
+static long long perfCount = 0;
+static long long allocCount = 0;
+static long long cont = 0;
+
+void computePerf();
 
 /* 
 In case we change the hashing scheme, this should return H(tableid, pid) + vaddr
@@ -103,6 +108,26 @@ int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, 
 	return 0;
 }
 
+void computePerf() {
+	for(int i = 0; i < 2 *NUM_PAGES_PER_MEM - 1; i++ ) {
+		if(!ram[i].valid) {
+			cont = 0;
+		}
+		else if(ram[i+1].vaddr == (ram[i].vaddr + 4096) && ram[i+1].pid == ram[i].pid) {
+			cont++;
+			//cout << endl << "Are we ever here 1";
+			if(cont == 2) {
+				//cout << endl << "Are we ever here";
+				perfCount++;
+				cont = 0;
+			}
+		}
+		else {
+			cont = 0;
+		}
+	}
+}
+
 void cuckoo(int pid, unsigned long vaddr, int new_vpid, int numpages, int debug_id) {
 	int ret = 0;
 	unsigned long offset = (vaddr % BLK_SIZE) / PAGE_SIZE;
@@ -123,7 +148,6 @@ void cuckoo(int pid, unsigned long vaddr, int new_vpid, int numpages, int debug_
 	}
 	return;
 }
-
 
 
 void parseFile(char *fileName) {
@@ -209,6 +233,8 @@ void parseFile(char *fileName) {
 
 				/* Starting with allocation */
 				cuckoo(pid, vaddr, new_vpid, numpages, line_num);
+				allocCount++;
+				computePerf();
 				
 			}
 
@@ -249,13 +275,14 @@ int main(int argc, char* argv[]) {
 	NUM_PAGES_PER_BLK = BLK_SIZE/PAGE_SIZE;
 	
 	ram = new PAGE_t[NUM_MEMS * NUM_PAGES_PER_MEM];
-	
 	// cout << "mem size:" << MEM_SIZE << ",page size:" << PAGE_SIZE << ",pages per mem:" << NUM_PAGES_PER_MEM << ",blks per mem:" << NUM_BLK_PER_MEM << ",blk size:" << BLK_SIZE << ",pages per blk:" << NUM_PAGES_PER_BLK << endl;
 	for (int i = 0; i < NUM_PAGES_PER_MEM; i++) {
 		ram[i].valid = false;
 	}
-
 	parseFile(fileName);
-
+	delete [] ram;
+	cout << endl << "perfCount: " << perfCount;
+	double perf = (double) perfCount/ allocCount;
+	cout << endl << "Perf: " << perf << endl;
 	return 0;
 }
