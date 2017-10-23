@@ -115,9 +115,9 @@ void computePerf() {
 		}
 		else if(ram[i+1].vaddr == (ram[i].vaddr + 4096) && ram[i+1].pid == ram[i].pid) {
 			cont++;
-			//cout << endl << "Are we ever here 1";
-			if(cont == 2) {
-				//cout << endl << "Are we ever here";
+			cout << endl << "Are we ever here 1";
+			if(cont == 512) {
+				cout << endl << "Are we ever here";
 				perfCount++;
 				cont = 0;
 			}
@@ -216,6 +216,8 @@ void parseFile(char *fileName) {
 					/* need to allocate pages here */
 					int key = get_vpid(pid);
 					cuckoo(pid, vaddr, key, numpages, line_num);
+					allocCount++;
+					computePerf();
 					continue;
 				}
 				/*

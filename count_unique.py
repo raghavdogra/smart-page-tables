@@ -18,18 +18,12 @@ opfile = open('output2.txt','w')
 
 
 
-for i in range(5):
-	opfile.write(str(i) + '    A       1       '+str(0))
-	opfile.write("\n")
+for i in range(2):
+	for j in range(0, 2097152, 4096):
+		opfile.write(str(i) + '    A       1       '+str(j))
+		opfile.write("\n")
 
 
-for i in range(5):
-	opfile.write(str(i) + '    A       1       '+str(2097152))
-	opfile.write("\n")
 
-
-for i in range(5):
-	opfile.write(str(i) + '    A       1       '+str(4194304))
-	opfile.write("\n")
 
 opfile.close()
