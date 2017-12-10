@@ -15,6 +15,7 @@ int NUM_PAGES_PER_BLK;
 int NUM_BLK_PER_MEM;
 unsigned long PAGE_SIZE;
 unsigned long BLK_SIZE;
+unsigned long NUM_CONT;
 unsigned long long MEM_SIZE;
 int NUM_PAGES_PER_MEM;
 int NUM_VPIDS;
@@ -115,7 +116,7 @@ void computePerf() {
 		}
 		else if(ram[i+1].vaddr == (ram[i].vaddr + 4096) && ram[i+1].pid == ram[i].pid) {
 			cont++;
-			if(cont == 512) {
+			if(cont == NUM_CONT) {
 				perfCount++;
 				cont = 0;
 			}
@@ -275,6 +276,7 @@ int main(int argc, char* argv[]) {
 	char *fileName = argv[1];
 	MEM_SIZE = stoul(argv[2]) * 1073741824;
 	PAGE_SIZE = stoul(argv[3]);
+	NUM_CONT = stoul(argv[4]);
 
 	NUM_PAGES_PER_MEM = (MEM_SIZE/NUM_MEMS)/PAGE_SIZE; 
 	// NUM_BLK_PER_MEM = (MEM_SIZE/NUM_MEMS)/NUM_VPIDS;
