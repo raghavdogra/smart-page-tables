@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#define LOG 1
+//#define LOG 1
 int NUM_PAGES_PER_BLK;
 int NUM_BLK_PER_MEM;
 unsigned long PAGE_SIZE;

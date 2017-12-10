@@ -4,7 +4,7 @@
 #include <iterator>
 #include "../include/vpid.hpp"
 using namespace std;
-#define DEBUG 1
+//#define DEBUG 1
 map<int,int> vpid;
 map<int, int> count_pages_per_proc;
 
