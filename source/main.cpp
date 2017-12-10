@@ -10,11 +10,12 @@
 
 using namespace std;
 
+//#define LOG
 int NUM_PAGES_PER_BLK;
 int NUM_BLK_PER_MEM;
 unsigned long PAGE_SIZE;
 unsigned long BLK_SIZE;
-unsigned long MEM_SIZE;
+unsigned long long MEM_SIZE;
 int NUM_PAGES_PER_MEM;
 int NUM_VPIDS;
 PAGE_t *ram;
@@ -33,9 +34,7 @@ int hash(int tableid, int pid, unsigned long vaddr, int blk_num) {
 
 
 void delete_one_page( int pid, unsigned long vaddr, int blk_num, int try_num, int max_tries, int debug_id ) {
-	if (try_num == max_tries) {
-		/* Just printing for now, need to retry with next page */
-		cout << debug_id << ".could not find allocation for vaddr:" << vaddr << endl;
+	if (try_num == max_tries) {	
 		return;
 	}
 
@@ -46,7 +45,6 @@ void delete_one_page( int pid, unsigned long vaddr, int blk_num, int try_num, in
 			 && ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].vaddr == vaddr ) {
 
 			ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].valid = false;
-			cout << debug_id << ".removal successful" << endl;
 			return;
 		}
 	}
@@ -80,7 +78,6 @@ int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, 
 		if ( ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].pid == pid
 			 && ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].valid == true
 			 && ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].vaddr == vaddr ) {
-			cout << debug_id << ".already here" << endl;
 			return 0;
 		}
 	}
@@ -91,8 +88,9 @@ int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, 
 		unsigned long repl_vaddr = ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].vaddr;
 		ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].pid = pid;
 		ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].vaddr = vaddr;
+		#ifdef LOG
 		cout << debug_id << ".pid:" << pid << ",vaddr:" << vaddr << " replacing pid:" << repl_pid << ",vaddr:" << repl_vaddr << endl;
-
+		#endif
 		if (tbl_num != (NUM_MEMS - 1))
 			return place( repl_pid, repl_vaddr, blk_num, (tbl_num + 1) % NUM_MEMS, try_num + 1, max_tries, debug_id, offset);
 		else
@@ -103,8 +101,9 @@ int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, 
 	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].valid = true;
 	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].pid = pid;
 	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].vaddr = vaddr;
+	#ifdef LOG
 	cout << debug_id << ".allocated pid:" << pid << ",vaddr:" << vaddr << " in tbl:" << tbl_num << ",blk:" << blk_num << endl;
-	
+	#endif
 	return 0;
 }
 
@@ -112,20 +111,16 @@ void computePerf() {
 	for(int i = 0; i < 2 *NUM_PAGES_PER_MEM - 1; i++ ) {
 		
 		if(!ram[i].valid) {
-			//cout << "are we ever here 2" << endl;
 			cont = 0;
 		}
 		else if(ram[i+1].vaddr == (ram[i].vaddr + 4096) && ram[i+1].pid == ram[i].pid) {
 			cont++;
-			//cout << "Are we ever here 1" << endl;
 			if(cont == 512) {
-				//cout << "Are we ever here" << endl;
 				perfCount++;
 				cont = 0;
 			}
 		}
 		else {
-			//cout << "are we ever here 2" << endl;
 			cont = 0;
 		}
 	}
@@ -172,10 +167,11 @@ void parseFile(char *fileName) {
 			int pid = stoi(tokens[0], nullptr, 10);
 			int numpages = stoi(tokens[2], nullptr, 10);
 			unsigned long vaddr = stoul(tokens[3], nullptr, 16);
-
+			#ifdef LOG
 			cout<< endl;
 			cout << line_num << ".New request arrived" << endl;
 			cout << line_num << " " << tokens[0] << " " << tokens[1] << " " << tokens[2] << " " << tokens[3] << endl;
+			#endif
 			// deallocation
 			if (tokens[1].compare("D") == 0) {
 				/*
@@ -187,8 +183,9 @@ void parseFile(char *fileName) {
 					Reduce the count
 					*/
 					count_pages_per_proc[pid] -= numpages;
-
+					#ifdef LOG
 					cout << line_num << ".deallocated pages for pid:"<< pid << ", curr count of pages:" << count_pages_per_proc[pid] << endl;
+					#endif
 					int key = get_vpid(pid);
 					delete_pages(pid, key, numpages, vaddr, line_num);
 					/*
@@ -196,7 +193,9 @@ void parseFile(char *fileName) {
 					*/
 					if (count_pages_per_proc[pid] == 0) {
 						count_pages_per_proc.erase(pid);
+						#ifdef LOG
 						cout << line_num << ".erasing record for pid "<< pid<<endl;
+						#endif
 						continue;
 					}
 				}
@@ -204,7 +203,9 @@ void parseFile(char *fileName) {
 					/*
 					Checking number of dealloc reqs that came bfr alloc reqs
 					*/
+					#ifdef LOG
 					cout << line_num << ".dealloc req came before alloc" << endl;
+					#endif
 					dealloc_bfr_alloc++;
 				}
 			}
@@ -215,7 +216,9 @@ void parseFile(char *fileName) {
 				*/
 				if ((count_pages_per_proc.find(pid) != count_pages_per_proc.end()) && count_pages_per_proc[pid] != 0) {
 					count_pages_per_proc[pid] += numpages;
+					#ifdef LOG
 					cout << line_num << ".process already there with non-0 count, pid:"<< pid << "-page cnt-" << count_pages_per_proc[pid] << endl;
+					#endif
 					/* need to allocate pages here */
 					int key = get_vpid(pid);
 					cuckoo(pid, vaddr, key, numpages, line_num);
@@ -228,13 +231,13 @@ void parseFile(char *fileName) {
 				hash function needs to always return the same value. new_vpid might change to H(pid)
 				*/
 				int new_vpid = next_free_vpid(line_num);
+				#ifdef LOG
 				cout << line_num << ".new vpid:" << new_vpid << endl;
+				#endif
 
 				
 				vpid[new_vpid] = pid;
-				cout << line_num << ".testing vpid insertion:key:" << new_vpid << "-value-" << vpid[new_vpid] << endl;
 				count_pages_per_proc.insert({pid, numpages});
-				cout << line_num << ".testing count_pages_per_proc insertion:key:" << pid << "-value-" << count_pages_per_proc[pid] << endl;
 
 				/* Starting with allocation */
 				cuckoo(pid, vaddr, new_vpid, numpages, line_num);
@@ -249,8 +252,10 @@ void parseFile(char *fileName) {
 
 		}
 		myfile.close();
+		#ifdef LOG	
 		cout << endl << "rehash count " << rehash_count << endl;
 		cout << "number of deallocations that came bfr allocations "<< dealloc_bfr_alloc << endl;
+		#endif
 	}
 	else cout << "Unable to open file"; 
 }
@@ -268,8 +273,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	char *fileName = argv[1];
-	MEM_SIZE = atoi(argv[2]) * 1073741824;
-	PAGE_SIZE = atoi(argv[3]);
+	MEM_SIZE = stoul(argv[2]) * 1073741824;
+	PAGE_SIZE = stoul(argv[3]);
 
 	NUM_PAGES_PER_MEM = (MEM_SIZE/NUM_MEMS)/PAGE_SIZE; 
 	// NUM_BLK_PER_MEM = (MEM_SIZE/NUM_MEMS)/NUM_VPIDS;

@@ -7,7 +7,7 @@ extern int NUM_BLK_PER_MEM;
 extern unsigned long PAGE_SIZE;
 extern unsigned long BLK_SIZE;
 
-extern unsigned long MEM_SIZE;
+extern unsigned long long MEM_SIZE;
 
 extern int NUM_PAGES_PER_MEM;
 #define NUM_MEMS			2
