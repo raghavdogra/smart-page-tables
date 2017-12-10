@@ -10,7 +10,7 @@
 
 using namespace std;
 
-//#define LOG
+#define LOG 1
 int NUM_PAGES_PER_BLK;
 int NUM_BLK_PER_MEM;
 unsigned long PAGE_SIZE;
@@ -36,6 +36,9 @@ int hash(int tableid, int pid, unsigned long vaddr, int blk_num) {
 
 void delete_one_page( int pid, unsigned long vaddr, int blk_num, int try_num, int max_tries, int debug_id ) {
 	if (try_num == max_tries) {	
+#ifdef LOG
+		cout << "max tries reached and page not found"<<endl;
+#endif
 		return;
 	}
 
@@ -46,6 +49,10 @@ void delete_one_page( int pid, unsigned long vaddr, int blk_num, int try_num, in
 			 && ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].vaddr == vaddr ) {
 
 			ram[ (i * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + (vaddr % BLK_SIZE) / PAGE_SIZE].valid = false;
+			count_pages_per_proc[pid] -= 1;
+#ifdef LOG
+			cout << "one page deleted and marked invalid pid " <<pid <<endl;
+#endif
 			return;
 		}
 	}
@@ -68,6 +75,9 @@ or the second 500 MB , the count of dislocations so far, total number of tries t
 implies we are caught in a circle
 */
 int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, int max_tries, int debug_id, unsigned long offset ) {
+#ifdef LOG
+	if (blk_num < 0) cout << "stop!!!" << endl;
+#endif
 	if (try_num == max_tries) {
 		/* Just printing for now, need to retry with next page */
 		cout << debug_id << ".max tries exceeded for vaddr:" << vaddr << endl;
@@ -103,7 +113,7 @@ int place( int pid, unsigned long vaddr, int blk_num, int tbl_num, int try_num, 
 	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].pid = pid;
 	ram[ (tbl_num * NUM_PAGES_PER_MEM) + (blk_num * NUM_PAGES_PER_BLK) + offset].vaddr = vaddr;
 	#ifdef LOG
-	cout << debug_id << ".allocated pid:" << pid << ",vaddr:" << vaddr << " in tbl:" << tbl_num << ",blk:" << blk_num << endl;
+	cout << debug_id << ".DONE.allocated pid:" << pid << ",vaddr:" << vaddr << " in tbl:" << tbl_num << ",blk:" << blk_num << endl;
 	#endif
 	return 0;
 }
@@ -179,15 +189,19 @@ void parseFile(char *fileName) {
 				 *	if count_pages_per_proc map contains this process id and count of its pages is >= num
 				 * 	of pages to dealloc then proceed else flag an error-why deallocate what u didnt allocate?
 				 */
-				if ((count_pages_per_proc.find(pid) != count_pages_per_proc.end()) && (count_pages_per_proc[pid] >= numpages)) {
+				if ((count_pages_per_proc.find(pid) != count_pages_per_proc.end()) && (count_pages_per_proc[pid] >= numpages)) 
+				{
 					/*
 					Reduce the count
 					*/
-					count_pages_per_proc[pid] -= numpages;
+					//count_pages_per_proc[pid] -= numpages;
 					#ifdef LOG
 					cout << line_num << ".deallocated pages for pid:"<< pid << ", curr count of pages:" << count_pages_per_proc[pid] << endl;
 					#endif
 					int key = get_vpid(pid);
+					#ifdef LOG
+					if (key == -1) cout << "in dealloc vpid is -1" <<endl;
+					#endif
 					delete_pages(pid, key, numpages, vaddr, line_num);
 					/*
 					If count of pages for this process has been reduced to 0, delete it from map
@@ -222,6 +236,9 @@ void parseFile(char *fileName) {
 					#endif
 					/* need to allocate pages here */
 					int key = get_vpid(pid);
+					#ifdef LOG
+					if (key == -1) cout << "in alloc vpid is -1" <<endl;
+					#endif
 					cuckoo(pid, vaddr, key, numpages, line_num);
 					allocCount++;
 					computePerf();

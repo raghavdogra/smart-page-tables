@@ -4,7 +4,7 @@
 #include <iterator>
 #include "../include/vpid.hpp"
 using namespace std;
-
+#define DEBUG 1
 map<int,int> vpid;
 map<int, int> count_pages_per_proc;
 
@@ -30,28 +30,50 @@ int next_free_vpid(int line_num) {
     }
     
     int old_num_vpids = NUM_VPIDS;
+    NUM_VPIDS = NUM_VPIDS * 2;
     for(int j = old_num_vpids; j < NUM_VPIDS; j++) {
         vpid.insert({j, -1});
     }
     rehash_count++;
-    NUM_VPIDS = NUM_VPIDS * 2;
     NUM_BLK_PER_MEM = NUM_VPIDS;
     BLK_SIZE = (MEM_SIZE/NUM_MEMS)/NUM_BLK_PER_MEM;
     NUM_PAGES_PER_BLK = BLK_SIZE/PAGE_SIZE;
+    
     PAGE_t *newram = new PAGE_t[2 * NUM_PAGES_PER_MEM];
+    // make a deep copy of ram in newram
     for(int i = 0; i < 2*NUM_PAGES_PER_MEM; i++) {
+#ifdef DEBUG
+	if ((ram[i].valid == true) && (get_vpid(ram[i].pid) == -1)) {
+		cout << "HOLE IN HISTORY DETECTED pid:"<< ram[i].pid << endl;
+		// check count pages per proc, the entry should not exist
+		if (count_pages_per_proc.find(ram[i].pid) == count_pages_per_proc.end()) {
+			cout << "entry not there in count pages per proc so not setting valid correctly when proc exits"<< endl;
+		}
+		else {
+			cout << "entry found in count pages per proc so changed vpid table wrong" << endl; 
+		}
+	}
+#endif
 	newram[i].valid = ram[i].valid;
 	newram[i].pid = ram[i].pid;
 	newram[i].vaddr = ram[i].vaddr;
     }
     delete[] ram;
+    // now going to rehash every thing to ram again
     ram = new PAGE_t[2 * NUM_PAGES_PER_MEM];
-    for (int i = 0; i < NUM_PAGES_PER_MEM; i++) {
+    for (int i = 0; i < (2*NUM_PAGES_PER_MEM); i++) {
 	ram[i].valid = false;
     }
     for(int i = 0; i < 2 * NUM_PAGES_PER_MEM; i++) {
 	if(newram[i].valid) {
-		cuckoo(newram[i].pid, newram[i].vaddr, get_vpid(newram[i].pid) , 1, i);	
+		/*
+		somehow it is valid in newram but its entry does not exist in vpid table
+		*/
+		int temp = get_vpid(newram[i].pid);
+#ifdef DEBUG
+		if (temp == -1) cout << "problem is here " << newram[i].pid << endl;
+#endif
+		cuckoo(newram[i].pid, newram[i].vaddr, temp , 1, i);	
 	}
     }
     next_vpid = old_num_vpids;
@@ -79,6 +101,9 @@ int get_vpid(int pid) {
     for(auto itr = vpid.begin(); itr != vpid.end(); itr++) {
         if (itr->second == pid) return itr->first;
     }
+#ifdef DEBUG
+    cout << "ALERT!!!"<<endl;
+#endif
     return -1;
 }
 
